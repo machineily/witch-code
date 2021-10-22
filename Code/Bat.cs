@@ -12,14 +12,6 @@ public class Bat : MonoBehaviour
     }
     void Update()
     {
-        // pausemenu
-        if (PublicVars.paused) return;
         transform.position = Vector3.MoveTowards(transform.position, target.transform.position, moveDistance);
-    }
-    private void OnTriggerEnter2D(Collider2D other){
-        if (other.tag == "Bullet"){
-            Destroy(other.gameObject);
-            Destroy(this.gameObject);
-        }
     }
 }

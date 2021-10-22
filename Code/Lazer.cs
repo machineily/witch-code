@@ -2,11 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BatSpawn : MonoBehaviour
+public class Lazer : MonoBehaviour
 {
-    public GameObject bat;
+    public GameObject lazer;
+    public float lazerUptime = 1f;
     public float startSpawnTime = 1f;
-    public float timePerSpawn = 3f;
+    public float timePerSpawn = 2f;
     public float x = 0;
     public float y = 5;
     public float z = 0;
@@ -22,6 +23,7 @@ public class BatSpawn : MonoBehaviour
     }
 
     void Spawn() {
-        var newBat = GameObject.Instantiate(bat, new Vector3(x, y, z), Quaternion.identity);
+        var newLazer = GameObject.Instantiate(lazer, new Vector3(x, y, z), Quaternion.identity);
+        Object.Destroy(newLazer, lazerUptime);
     }
 }

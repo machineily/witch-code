@@ -12,15 +12,17 @@ public class Player : MonoBehaviour
     public Animator animator;
     Rigidbody2D _rigidbody;
     public LayerMask groundLayer;
-    public Transform feet;
+    //public Transform feet;
     public bool grounded = false;
 
     float xSpeed = 0;
-    int jumps = 0;
+
+    public Text Death;
+    public Text warn;
+    public Text Guide;
     
     //bullet
     public GameObject bulletPrefab;
-    public GameObject bulletPrefab2;
     int bulletForce = 50;
     public Transform spawnPos;
     public int levelToLoad = 1;
@@ -28,13 +30,14 @@ public class Player : MonoBehaviour
     Vector2 mousePos;// mouse position
 
     //heart
-    
+    public int life = 3;
+    public int numHearts = 3;
     public Image[] hearts;
     public Sprite fHeart;
     public Sprite eHeart;
-    public GameObject hurt;
+
     //potion
-    
+    public int Herb = 0;
     public Image[] Potion;
     public Sprite Zero;
     public Sprite Twenty;
@@ -43,29 +46,18 @@ public class Player : MonoBehaviour
     public Sprite Eighty;    
     public Sprite Full;
 
-    public GameObject available;
     //change animation due to speed
     float hMove = 0f;
     bool fright = true;
     private SpriteRenderer spRenderer ;
-    
 
     // change animation to jump
     bool jump  = false;
-    bool immune = false;
 
-    // audio source
-    public AudioClip magicSnd;
-    AudioSource _audioSource;
-
-    // wand
-    public Transform wandPos;
     void Start()
     {
-        reset();
         _rigidbody = GetComponent<Rigidbody2D>();
-        _audioSource = GetComponent<AudioSource>();
-        hurt.SetActive(false);
+        //StartCoroutine(show());
     }
 
     // Update is called once per frame
@@ -79,40 +71,33 @@ public class Player : MonoBehaviour
 
     void Update()
     {
-        // potion reminder of using
-        if (PublicVars.Herb > 0){
-            available.SetActive(true);
-        }
-        else{
-            available.SetActive(false);
-        }
-        // pausemenu
-        if (PublicVars.paused) return;
-        
-        grounded = Physics2D.OverlapCircle(feet.position, .3f, groundLayer);
-        if (grounded) {
-            jumps = 0;
-        }
-
-        if (Input.GetButtonDown("Jump") && (jumps > 0 || grounded)) {
-            _rigidbody.velocity = new Vector2(_rigidbody.velocity.x, 0);
+        grounded = Physics2D.OverlapCircle(this.transform.position, 1f, groundLayer);
+        if (Input.GetButtonDown("Jump") && grounded)
+        {
             _rigidbody.AddForce(new Vector2(0, jumpForce));
-            jumps--;
         }
 
+        // border
+        if (_rigidbody.transform.position.x >= 8.22f) {
+            // change!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        }
+        else if (transform.position.x <= -9){
+            RePosition();
+        } 
         //heart
-        if (PublicVars.life > PublicVars.numHearts){
-            PublicVars.life = PublicVars.numHearts;
+        if (life > numHearts){
+            life = numHearts;
         }
         for (int i = 0; i < hearts.Length; i++){
-            if (i < PublicVars.life){
+            if (i < life){
                 hearts[i].sprite = fHeart;
             }
             else{
                 hearts[i].sprite = eHeart;
             }
 
-            if (i >=  PublicVars.numHearts){
+            if (i >  numHearts){
                 hearts[i].enabled = false;
             } else {
                 hearts[i].enabled = true;
@@ -121,7 +106,7 @@ public class Player : MonoBehaviour
 
         //potion
         for (int j = 0; j < Potion.Length; j++){
-            if (j == PublicVars.Herb){
+            if (j == Herb){
                 Potion[j].enabled = true;
             }
             else{
@@ -159,45 +144,46 @@ public class Player : MonoBehaviour
         spawnPos.rotation = Quaternion.Euler(0, 0, bulletAngle);
         if (Input.GetButtonDown("Fire1"))
         {
-            _audioSource.PlayOneShot(magicSnd);
-            if (!PublicVars.doubleDamage){
-                
-                GameObject newbullet = Instantiate(bulletPrefab, spawnPos.position, 
+            GameObject newbullet = Instantiate(bulletPrefab, spawnPos.position, 
                 Quaternion.Euler(0, 0, bulletAngle));
-                newbullet.GetComponent<Rigidbody2D>().velocity = spawnPos.right * bulletForce; 
-            }
-            else{
-                GameObject newbullet = Instantiate(bulletPrefab2, spawnPos.position, 
-                Quaternion.Euler(0, 0, bulletAngle));
-                newbullet.GetComponent<Rigidbody2D>().velocity = spawnPos.right * bulletForce; 
-            }
+            newbullet.GetComponent<Rigidbody2D>().velocity = spawnPos.right * bulletForce; 
         }
-        //wand moving with mouse position
-        Vector2 mDir2 = mousePos - _rigidbody.position;
-        float angle = Mathf.Atan2(mDir.y, mDir.x) * Mathf.Rad2Deg;
-        mousePos = cam.ScreenToWorldPoint(Input.mousePosition);
-        wandPos.rotation = Quaternion.Euler(0, 0, angle);
         
     }
 
     // landing function
     private void OnCollisionEnter2D(Collision2D other)
     {
-        if ((other.gameObject.tag == "Ground") | (other.gameObject.tag == "Platform"))
+        if (other.gameObject.tag == "Ground")
         {
             OnLanding();
         }
-
-        // encounter monster (enemy)
-        if (other.gameObject.tag == "Enemy")
+        // encounter monster (slime)
+        else if (other.gameObject.tag == "Slime")
         {
             loseLife();
         }
+
     }
     public void OnLanding(){
         animator.SetBool("Jump", false);
     }
 
+
+
+    IEnumerator show() {
+        //run instructions
+        if (levelToLoad == 1){
+            Guide.text = "FIGHT THE BAT!";
+            yield return new WaitForSecondsRealtime(2f);
+            Guide.text = "FEAR THE LAVA!!";
+            yield return new WaitForSecondsRealtime(2f);
+            Guide.text = "EXIT ON THE RIGHT!!!";
+            yield return new WaitForSecondsRealtime(2f);
+            Guide.enabled = false;
+        }
+        // etc...
+    }
     private void flip(){
         fright = !fright;
         transform.Rotate(0f,180f,0f);
@@ -212,75 +198,39 @@ public class Player : MonoBehaviour
             loseLife();
             RePosition();
         }
-
-        if (other.CompareTag("LevelGate"))
-        {
-            SceneManager.LoadScene("Level" + levelToLoad);
-        }
         
-        if (other.CompareTag("Laser") && !immune) {
-            loseLife();
-        }
-
-        if (other.gameObject.tag == "Enemy" && !immune)
-        {
-            loseLife();
-        }
-
-        if (other.CompareTag("Herb")){
-            PublicVars.Herb++;
-            Destroy (GameObject.FindWithTag("Herb"));
-        }
-
     }
+
     public void loseLife(){
-        PublicVars.life--;
-        if (PublicVars.life <= 0){
+        life--;
+        Guide.enabled = true;
+        if (life == 0){
             StartCoroutine(death());
             StartCoroutine(Restart());
         }
         else{
             StartCoroutine(warning());
         }
-        immune = true;
-        Invoke("SetImmuneFalse", 1.0f);
     }
-
 
     IEnumerator warning() {
         //_audioSource.PlayOneShot(hurtSnd);
-        hurt.SetActive(true);
-        yield return new WaitForSecondsRealtime(0.3f);
-        hurt.SetActive(false);
+        warn.enabled = true;
+        warn.text = "IT HURTS!";
+        yield return new WaitForSecondsRealtime(2f);
+        warn.enabled = false;
+        
     }
 
-
     IEnumerator Restart() {
-        yield return new WaitForSeconds(.5f);
-        reset();
+        yield return new WaitForSeconds(1.5f);
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     IEnumerator death() {
+        Death.enabled = true;
+        Death.text = "DIED!!!";
         yield return new WaitForSecondsRealtime(5f);
+        Death.enabled = false;
     }
-
-    void SetImmuneFalse()
-    {
-        immune = false;
-    }
-
-    void reset(){
-        PublicVars.paused = false;
-        PublicVars.Herb = 0;
-
-        PublicVars.numHearts = 3;
-
-        PublicVars.life = 3;
-
-        PublicVars.bossBeaten = false;
-        PublicVars.doubleDamage = false;
-    }
-
-
 }

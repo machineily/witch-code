@@ -4,38 +4,25 @@ using UnityEngine;
 
 public class MovingPlatform : MonoBehaviour
 {
-    public float speed = 0.5f;
-    public float distance = 5f;
-    public bool moveRight = false;
-    float startX;
-
-    void Start() {
-        startX = transform.position.x;
-    }
+    public float speed = 2f;
+    public float leftPos = -3.5f;
+    public float rightPos = 4.5f;
+    
+    public bool moveRight = true;
 
     // Update is called once per frame
     void Update()
     {
-        // pausemenu
-        if (PublicVars.paused) return;
-        Vector2 newPosition = transform.position;
+        if(transform.position.x > rightPos){
+            moveRight = false;
+        }
+        if(transform.position.x < leftPos){
+            moveRight = true;
+        }
         if(moveRight){
-            newPosition.x = Mathf.SmoothStep(startX, startX+distance, Mathf.PingPong(Time.time * speed,1));
+            transform.position = new Vector2(transform.position.x + speed * Time.deltaTime, transform.position.y);
         }else{
-            newPosition.x = Mathf.SmoothStep(startX, startX-distance, Mathf.PingPong(Time.time * speed,1));
-        }
-        transform.position = newPosition;
-    }
-
-    private void OnCollisionEnter2D(Collision2D other) {
-        if(other.gameObject.CompareTag("Player")){
-            other.transform.SetParent(transform);
-        }
-    }
-
-    private void OnCollisionExit2D(Collision2D other) {
-        if(other.gameObject.CompareTag("Player")){
-            other.transform.SetParent(null);
+            transform.position = new Vector2(transform.position.x - speed * Time.deltaTime, transform.position.y);
         }
     }
 }
