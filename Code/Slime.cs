@@ -57,7 +57,7 @@ public class Slime : MonoBehaviour
         else{
             slimeLife -= 1;
         }
-        if (slimeLife == 0)
+        if (slimeLife <= 0)
         {
             if(PublicVars.numHearts > PublicVars.life){
                 PublicVars.life++;

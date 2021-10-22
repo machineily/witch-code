@@ -17,13 +17,10 @@ public class Player : MonoBehaviour
 
     float xSpeed = 0;
     int jumps = 0;
-
-    public Text Death;
-    public Text warn;
-    public Text Guide;
     
     //bullet
     public GameObject bulletPrefab;
+    public GameObject bulletPrefab2;
     int bulletForce = 50;
     public Transform spawnPos;
     public int levelToLoad = 1;
@@ -35,7 +32,7 @@ public class Player : MonoBehaviour
     public Image[] hearts;
     public Sprite fHeart;
     public Sprite eHeart;
-
+    public GameObject hurt;
     //potion
     
     public Image[] Potion;
@@ -46,10 +43,12 @@ public class Player : MonoBehaviour
     public Sprite Eighty;    
     public Sprite Full;
 
+    public GameObject available;
     //change animation due to speed
     float hMove = 0f;
     bool fright = true;
     private SpriteRenderer spRenderer ;
+    
 
     // change animation to jump
     bool jump  = false;
@@ -58,11 +57,15 @@ public class Player : MonoBehaviour
     // audio source
     public AudioClip magicSnd;
     AudioSource _audioSource;
+
+    // wand
+    public Transform wandPos;
     void Start()
     {
+        reset();
         _rigidbody = GetComponent<Rigidbody2D>();
         _audioSource = GetComponent<AudioSource>();
-        //StartCoroutine(show());
+        hurt.SetActive(false);
     }
 
     // Update is called once per frame
@@ -76,6 +79,13 @@ public class Player : MonoBehaviour
 
     void Update()
     {
+        // potion reminder of using
+        if (PublicVars.Herb > 0){
+            available.SetActive(true);
+        }
+        else{
+            available.SetActive(false);
+        }
         // pausemenu
         if (PublicVars.paused) return;
         
@@ -90,15 +100,6 @@ public class Player : MonoBehaviour
             jumps--;
         }
 
-
-        // // border
-        // if (_rigidbody.transform.position.x >= 8.22f) {
-        //     // change!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        //     SceneManager.LoadScene(SceneManager.GetActiveScene().name);
-        // }
-        // else if (transform.position.x <= -9){
-        //     RePosition();
-        // } 
         //heart
         if (PublicVars.life > PublicVars.numHearts){
             PublicVars.life = PublicVars.numHearts;
@@ -159,10 +160,23 @@ public class Player : MonoBehaviour
         if (Input.GetButtonDown("Fire1"))
         {
             _audioSource.PlayOneShot(magicSnd);
-            GameObject newbullet = Instantiate(bulletPrefab, spawnPos.position, 
+            if (!PublicVars.doubleDamage){
+                
+                GameObject newbullet = Instantiate(bulletPrefab, spawnPos.position, 
                 Quaternion.Euler(0, 0, bulletAngle));
-            newbullet.GetComponent<Rigidbody2D>().velocity = spawnPos.right * bulletForce; 
+                newbullet.GetComponent<Rigidbody2D>().velocity = spawnPos.right * bulletForce; 
+            }
+            else{
+                GameObject newbullet = Instantiate(bulletPrefab2, spawnPos.position, 
+                Quaternion.Euler(0, 0, bulletAngle));
+                newbullet.GetComponent<Rigidbody2D>().velocity = spawnPos.right * bulletForce; 
+            }
         }
+        //wand moving with mouse position
+        Vector2 mDir2 = mousePos - _rigidbody.position;
+        float angle = Mathf.Atan2(mDir.y, mDir.x) * Mathf.Rad2Deg;
+        mousePos = cam.ScreenToWorldPoint(Input.mousePosition);
+        wandPos.rotation = Quaternion.Euler(0, 0, angle);
         
     }
 
@@ -184,19 +198,6 @@ public class Player : MonoBehaviour
         animator.SetBool("Jump", false);
     }
 
-    IEnumerator show() {
-        //run instructions
-        if (levelToLoad == 1){
-            Guide.text = "FIGHT THE BAT!";
-            yield return new WaitForSecondsRealtime(2f);
-            Guide.text = "FEAR THE LAVA!!";
-            yield return new WaitForSecondsRealtime(2f);
-            Guide.text = "EXIT ON THE RIGHT!!!";
-            yield return new WaitForSecondsRealtime(2f);
-            Guide.enabled = false;
-        }
-        // etc...
-    }
     private void flip(){
         fright = !fright;
         transform.Rotate(0f,180f,0f);
@@ -234,7 +235,6 @@ public class Player : MonoBehaviour
     }
     public void loseLife(){
         PublicVars.life--;
-        Guide.enabled = true;
         if (PublicVars.life <= 0){
             StartCoroutine(death());
             StartCoroutine(Restart());
@@ -249,29 +249,37 @@ public class Player : MonoBehaviour
 
     IEnumerator warning() {
         //_audioSource.PlayOneShot(hurtSnd);
-        warn.enabled = true;
-        warn.text = "IT HURTS!";
-        yield return new WaitForSecondsRealtime(2f);
-        warn.enabled = false;
-        
+        hurt.SetActive(true);
+        yield return new WaitForSecondsRealtime(0.3f);
+        hurt.SetActive(false);
     }
+
 
     IEnumerator Restart() {
         yield return new WaitForSeconds(.5f);
-        PublicVars.life = 3;
+        reset();
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     IEnumerator death() {
-        Death.enabled = true;
-        Death.text = "DIED!!!";
         yield return new WaitForSecondsRealtime(5f);
-        Death.enabled = false;
     }
 
     void SetImmuneFalse()
     {
         immune = false;
+    }
+
+    void reset(){
+        PublicVars.paused = false;
+        PublicVars.Herb = 0;
+
+        PublicVars.numHearts = 3;
+
+        PublicVars.life = 3;
+
+        PublicVars.bossBeaten = false;
+        PublicVars.doubleDamage = false;
     }
 
 
