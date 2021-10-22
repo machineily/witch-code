@@ -20,7 +20,6 @@ public class Player : MonoBehaviour
     
     //bullet
     public GameObject bulletPrefab;
-    public GameObject bulletPrefab2;
     int bulletForce = 50;
     public Transform spawnPos;
     public int levelToLoad = 1;
@@ -34,7 +33,7 @@ public class Player : MonoBehaviour
     public Sprite eHeart;
     public GameObject hurt;
     //potion
-    
+    public GameObject usePotion;
     public Image[] Potion;
     public Sprite Zero;
     public Sprite Twenty;
@@ -43,7 +42,6 @@ public class Player : MonoBehaviour
     public Sprite Eighty;    
     public Sprite Full;
 
-    public GameObject available;
     //change animation due to speed
     float hMove = 0f;
     bool fright = true;
@@ -62,10 +60,10 @@ public class Player : MonoBehaviour
     public Transform wandPos;
     void Start()
     {
-        reset();
         _rigidbody = GetComponent<Rigidbody2D>();
         _audioSource = GetComponent<AudioSource>();
         hurt.SetActive(false);
+        usePotion.SetActive(false);
     }
 
     // Update is called once per frame
@@ -79,16 +77,15 @@ public class Player : MonoBehaviour
 
     void Update()
     {
-        // potion reminder of using
-        if (PublicVars.Herb > 0){
-            available.SetActive(true);
-        }
-        else{
-            available.SetActive(false);
-        }
         // pausemenu
         if (PublicVars.paused) return;
-        
+        // potion use reminder
+        if (PublicVars.Herb > 0){
+            usePotion.SetActive(true);
+        }
+        else{
+            usePotion.SetActive(false);
+        }
         grounded = Physics2D.OverlapCircle(feet.position, .3f, groundLayer);
         if (grounded) {
             jumps = 0;
@@ -160,17 +157,9 @@ public class Player : MonoBehaviour
         if (Input.GetButtonDown("Fire1"))
         {
             _audioSource.PlayOneShot(magicSnd);
-            if (!PublicVars.doubleDamage){
-                
-                GameObject newbullet = Instantiate(bulletPrefab, spawnPos.position, 
+            GameObject newbullet = Instantiate(bulletPrefab, spawnPos.position, 
                 Quaternion.Euler(0, 0, bulletAngle));
-                newbullet.GetComponent<Rigidbody2D>().velocity = spawnPos.right * bulletForce; 
-            }
-            else{
-                GameObject newbullet = Instantiate(bulletPrefab2, spawnPos.position, 
-                Quaternion.Euler(0, 0, bulletAngle));
-                newbullet.GetComponent<Rigidbody2D>().velocity = spawnPos.right * bulletForce; 
-            }
+            newbullet.GetComponent<Rigidbody2D>().velocity = spawnPos.right * bulletForce; 
         }
         //wand moving with mouse position
         Vector2 mDir2 = mousePos - _rigidbody.position;
@@ -254,10 +243,10 @@ public class Player : MonoBehaviour
         hurt.SetActive(false);
     }
 
-
     IEnumerator Restart() {
         yield return new WaitForSeconds(.5f);
-        reset();
+        PublicVars.life = 3;
+        PublicVars.numHearts = 3;
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
@@ -268,18 +257,6 @@ public class Player : MonoBehaviour
     void SetImmuneFalse()
     {
         immune = false;
-    }
-
-    void reset(){
-        PublicVars.paused = false;
-        PublicVars.Herb = 0;
-
-        PublicVars.numHearts = 3;
-
-        PublicVars.life = 3;
-
-        PublicVars.bossBeaten = false;
-        PublicVars.doubleDamage = false;
     }
 
 
