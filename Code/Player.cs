@@ -20,6 +20,7 @@ public class Player : MonoBehaviour
     
     //bullet
     public GameObject bulletPrefab;
+    public GameObject bulletPrefab2;
     int bulletForce = 50;
     public Transform spawnPos;
     public int levelToLoad = 1;
@@ -157,9 +158,17 @@ public class Player : MonoBehaviour
         if (Input.GetButtonDown("Fire1"))
         {
             _audioSource.PlayOneShot(magicSnd);
-            GameObject newbullet = Instantiate(bulletPrefab, spawnPos.position, 
+            if (!PublicVars.doubleDamage){
+                GameObject newbullet = Instantiate(bulletPrefab, spawnPos.position, 
                 Quaternion.Euler(0, 0, bulletAngle));
-            newbullet.GetComponent<Rigidbody2D>().velocity = spawnPos.right * bulletForce; 
+                newbullet.GetComponent<Rigidbody2D>().velocity = spawnPos.right * bulletForce; 
+            }
+            else{
+                GameObject newbullet = Instantiate(bulletPrefab2, spawnPos.position, 
+                Quaternion.Euler(0, 0, bulletAngle));
+                newbullet.GetComponent<Rigidbody2D>().velocity = spawnPos.right * bulletForce; 
+            }
+            
         }
         //wand moving with mouse position
         Vector2 mDir2 = mousePos - _rigidbody.position;
@@ -226,7 +235,7 @@ public class Player : MonoBehaviour
         PublicVars.life--;
         if (PublicVars.life <= 0){
             StartCoroutine(death());
-            StartCoroutine(Restart());
+            reset();
         }
         else{
             StartCoroutine(warning());
@@ -245,12 +254,12 @@ public class Player : MonoBehaviour
 
     IEnumerator Restart() {
         yield return new WaitForSeconds(.5f);
-        PublicVars.life = 3;
-        PublicVars.numHearts = 3;
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        reset();
     }
 
     IEnumerator death() {
+        reset();
         yield return new WaitForSecondsRealtime(5f);
     }
 
@@ -259,5 +268,17 @@ public class Player : MonoBehaviour
         immune = false;
     }
 
+    void reset(){
+    
+    PublicVars. paused = false;
+    PublicVars.Herb = 0;
+
+    PublicVars.numHearts = 3;
+
+    PublicVars.life = 3;
+
+    PublicVars.bossBeaten = false;
+    PublicVars.doubleDamage = false;
+    }
 
 }

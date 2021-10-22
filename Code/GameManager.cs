@@ -48,6 +48,12 @@ public class GameManager : MonoBehaviour
     public void Restart()
     {
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        PublicVars. paused = false;
+        PublicVars.Herb = 0;
+        PublicVars.numHearts = 3;
+        PublicVars.life = 3;
+        PublicVars.bossBeaten = false;
+        PublicVars.doubleDamage = false;
     }
 
     public void Quit()
