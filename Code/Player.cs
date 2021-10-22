@@ -87,6 +87,11 @@ public class Player : MonoBehaviour
         else{
             usePotion.SetActive(false);
         }
+
+        // maximum life = 6
+        if (PublicVars.life > 6){
+            PublicVars.life = 6;
+        }
         grounded = Physics2D.OverlapCircle(feet.position, .3f, groundLayer);
         if (grounded) {
             jumps = 0;
