@@ -10,6 +10,7 @@ public class BatSpawn : MonoBehaviour
     public float x = 0;
     public float y = 5;
     public float z = 0;
+    public bool allowSpawn = true;
     void Start()
     {
         InvokeRepeating ("Spawn", startSpawnTime, timePerSpawn);
@@ -18,10 +19,16 @@ public class BatSpawn : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        if(GameObject.FindWithTag("Player").transform.position.y > y){
+            allowSpawn = false;
+        }else{
+            allowSpawn = true;
+        }
     }
 
     void Spawn() {
-        var newBat = GameObject.Instantiate(bat, new Vector3(x, y, z), Quaternion.identity);
+        if(allowSpawn && !PublicVars.bossBeaten){
+            var newBat = GameObject.Instantiate(bat, new Vector3(x, y, z), Quaternion.identity);
+        }
     }
 }

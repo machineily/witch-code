@@ -8,10 +8,12 @@ public class Slime : MonoBehaviour
     public Animator animator;
     // face right or face left
     bool fRight = false;
-    float speed  = 4.0f;
+    public float speed  = 3.0f;
     public SpriteRenderer spRenderer;
     private float slimeLife;
     private float MaxSlimeLife = 2;
+    float startX;
+    public float distance = 2f;
     //public HealthBar hBar;// slime's health bar
     // Start is called before the first frame update
     void Start()
@@ -19,6 +21,7 @@ public class Slime : MonoBehaviour
         //spRenderer = GetComponent<SpriteRenderer>();
         slimeLife = MaxSlimeLife;
         //hBar.SetLife(slimeLife, MaxSlimeLife);
+        startX = transform.position.x;
     }
 
     // Update is called once per frame
@@ -31,11 +34,11 @@ public class Slime : MonoBehaviour
             moveLeft();
         }
 
-        if (transform.position.x <= 3.05f){
+        if (transform.position.x <= startX-distance){
             fRight = true;
             spRenderer.flipX = true;
         }
-        else if (transform.position.x >= 8.22f) {
+        else if (transform.position.x >= startX+distance) {
             fRight = false;
             spRenderer.flipX = false;
         }
@@ -46,11 +49,19 @@ public class Slime : MonoBehaviour
     }
 
     private void takeShot(){
-        slimeLife --;
         //hBar.gameObject.SetActive(true);
         //hBar.SetLife(slimeLife, MaxSlimeLife);
+        if (PublicVars.doubleDamage){
+            slimeLife -= 2;
+        }
+        else{
+            slimeLife -= 1;
+        }
         if (slimeLife == 0)
         {
+            if(PublicVars.numHearts > PublicVars.life){
+                PublicVars.life++;
+            }
             Destroy(this.gameObject);
         }
     }
@@ -64,8 +75,8 @@ public class Slime : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other){
         if (other.tag == "Bullet"){
-            Destroy(other.gameObject);
-            takeShot();
+            takeShot();     
         }
+            
     }
 }

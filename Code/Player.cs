@@ -12,10 +12,11 @@ public class Player : MonoBehaviour
     public Animator animator;
     Rigidbody2D _rigidbody;
     public LayerMask groundLayer;
-    //public Transform feet;
+    public Transform feet;
     public bool grounded = false;
 
     float xSpeed = 0;
+    int jumps = 0;
 
     public Text Death;
     public Text warn;
@@ -30,14 +31,13 @@ public class Player : MonoBehaviour
     Vector2 mousePos;// mouse position
 
     //heart
-    public int life = 3;
-    public int numHearts = 3;
+    
     public Image[] hearts;
     public Sprite fHeart;
     public Sprite eHeart;
 
     //potion
-    public int Herb = 0;
+    
     public Image[] Potion;
     public Sprite Zero;
     public Sprite Twenty;
@@ -53,10 +53,15 @@ public class Player : MonoBehaviour
 
     // change animation to jump
     bool jump  = false;
+    bool immune = false;
 
+    // audio source
+    public AudioClip magicSnd;
+    AudioSource _audioSource;
     void Start()
     {
         _rigidbody = GetComponent<Rigidbody2D>();
+        _audioSource = GetComponent<AudioSource>();
         //StartCoroutine(show());
     }
 
@@ -71,33 +76,42 @@ public class Player : MonoBehaviour
 
     void Update()
     {
-        grounded = Physics2D.OverlapCircle(this.transform.position, 1f, groundLayer);
-        if (Input.GetButtonDown("Jump") && grounded)
-        {
-            _rigidbody.AddForce(new Vector2(0, jumpForce));
+        // pausemenu
+        if (PublicVars.paused) return;
+        
+        grounded = Physics2D.OverlapCircle(feet.position, .3f, groundLayer);
+        if (grounded) {
+            jumps = 0;
         }
 
-        // border
-        if (_rigidbody.transform.position.x >= 8.22f) {
-            // change!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        if (Input.GetButtonDown("Jump") && (jumps > 0 || grounded)) {
+            _rigidbody.velocity = new Vector2(_rigidbody.velocity.x, 0);
+            _rigidbody.AddForce(new Vector2(0, jumpForce));
+            jumps--;
         }
-        else if (transform.position.x <= -9){
-            RePosition();
-        } 
+
+
+        // // border
+        // if (_rigidbody.transform.position.x >= 8.22f) {
+        //     // change!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        //     SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        // }
+        // else if (transform.position.x <= -9){
+        //     RePosition();
+        // } 
         //heart
-        if (life > numHearts){
-            life = numHearts;
+        if (PublicVars.life > PublicVars.numHearts){
+            PublicVars.life = PublicVars.numHearts;
         }
         for (int i = 0; i < hearts.Length; i++){
-            if (i < life){
+            if (i < PublicVars.life){
                 hearts[i].sprite = fHeart;
             }
             else{
                 hearts[i].sprite = eHeart;
             }
 
-            if (i >  numHearts){
+            if (i >=  PublicVars.numHearts){
                 hearts[i].enabled = false;
             } else {
                 hearts[i].enabled = true;
@@ -106,7 +120,7 @@ public class Player : MonoBehaviour
 
         //potion
         for (int j = 0; j < Potion.Length; j++){
-            if (j == Herb){
+            if (j == PublicVars.Herb){
                 Potion[j].enabled = true;
             }
             else{
@@ -144,6 +158,7 @@ public class Player : MonoBehaviour
         spawnPos.rotation = Quaternion.Euler(0, 0, bulletAngle);
         if (Input.GetButtonDown("Fire1"))
         {
+            _audioSource.PlayOneShot(magicSnd);
             GameObject newbullet = Instantiate(bulletPrefab, spawnPos.position, 
                 Quaternion.Euler(0, 0, bulletAngle));
             newbullet.GetComponent<Rigidbody2D>().velocity = spawnPos.right * bulletForce; 
@@ -154,22 +169,20 @@ public class Player : MonoBehaviour
     // landing function
     private void OnCollisionEnter2D(Collision2D other)
     {
-        if (other.gameObject.tag == "Ground")
+        if ((other.gameObject.tag == "Ground") | (other.gameObject.tag == "Platform"))
         {
             OnLanding();
         }
-        // encounter monster (slime)
-        else if (other.gameObject.tag == "Slime")
+
+        // encounter monster (enemy)
+        if (other.gameObject.tag == "Enemy")
         {
             loseLife();
         }
-
     }
     public void OnLanding(){
         animator.SetBool("Jump", false);
     }
-
-
 
     IEnumerator show() {
         //run instructions
@@ -198,20 +211,41 @@ public class Player : MonoBehaviour
             loseLife();
             RePosition();
         }
-        
-    }
 
+        if (other.CompareTag("LevelGate"))
+        {
+            SceneManager.LoadScene("Level" + levelToLoad);
+        }
+        
+        if (other.CompareTag("Laser") && !immune) {
+            loseLife();
+        }
+
+        if (other.gameObject.tag == "Enemy" && !immune)
+        {
+            loseLife();
+        }
+
+        if (other.CompareTag("Herb")){
+            PublicVars.Herb++;
+            Destroy (GameObject.FindWithTag("Herb"));
+        }
+
+    }
     public void loseLife(){
-        life--;
+        PublicVars.life--;
         Guide.enabled = true;
-        if (life == 0){
+        if (PublicVars.life <= 0){
             StartCoroutine(death());
             StartCoroutine(Restart());
         }
         else{
             StartCoroutine(warning());
         }
+        immune = true;
+        Invoke("SetImmuneFalse", 1.0f);
     }
+
 
     IEnumerator warning() {
         //_audioSource.PlayOneShot(hurtSnd);
@@ -223,7 +257,8 @@ public class Player : MonoBehaviour
     }
 
     IEnumerator Restart() {
-        yield return new WaitForSeconds(1.5f);
+        yield return new WaitForSeconds(.5f);
+        PublicVars.life = 3;
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
@@ -233,4 +268,11 @@ public class Player : MonoBehaviour
         yield return new WaitForSecondsRealtime(5f);
         Death.enabled = false;
     }
+
+    void SetImmuneFalse()
+    {
+        immune = false;
+    }
+
+
 }

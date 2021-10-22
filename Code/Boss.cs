@@ -21,14 +21,12 @@ public class Boss : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other) {
         if (other.CompareTag("Bullet")) {
-            Invoke("BackToWhite", 1f);
             if (PublicVars.doubleDamage){
                 bossHealth -= 2;
             }
             else{
                 bossHealth -= 1;
             }
-            Destroy(other.gameObject);
             //Destroy(gameObject); -- this will bypass the enemy object's health bar. (see Slime code)
         }
     }
