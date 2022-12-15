@@ -1,2 +1,10 @@
 # witch-code
-https://machineily.itch.io/return
+github:
+
+https://github.com/machineily/witch-code
+
+itch.io:
+
+https://itzbosco.itch.io/witchs-adventure
+
+Text only submission
